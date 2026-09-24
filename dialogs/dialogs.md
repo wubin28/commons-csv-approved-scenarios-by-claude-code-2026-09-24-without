@@ -89,3 +89,39 @@ T1（TDD 红）完成。
 全量 `mvn test`：942 run / 13 fail / 0 error / 11 skip，BUILD FAILURE（预期；失败仅在 RequiredHeadersTest，原有 924 条全部通过）。本环节无构建踩坑。
 
 提交并打 tag `tdd-t1-red`，commit 哈希见本轮聊天回复。下一环节：T2（TDD 绿）——实现检查让 18 条全绿，且不破坏原有 924 条。
+
+## T2 · 第 1 轮
+
+### 我
+
+【会话守则】
+- 当前目录 = 本仓库根（git） = `/Users/binwu/OOR/my-lab/commons-csv-approved-scenarios-by-claude-code-2026-09-24/without`。不要 git push；不要修改 /Users/binwu/OOR/katas/commons-csv。
+- 每次回复我之后，把本轮对话完整追加到 dialogs/dialogs.md 末尾：标题"## <环节编号> · 第 N 轮"，"### 我"原样贴出我的消息，"### Agent"贴出你回复我的全文。
+- 遇到坑：先修复，再往 guide.md「踩坑记录」追加：环节 · 现象 → 原因 → 解决。
+- 环节结束时一次性 git commit（Conventional Commits，意图清楚），打指定 tag，然后告诉我：commit、tag、mvn test 结果、下一环节。
+
+【本环节：T2（TDD 绿）】
+先读 guide.md（隐含假设、测试清单）和 RequiredHeadersTest.java。
+1. 在 src/main 里写出让 RequiredHeadersTest 全部通过的实现。只写测试要求的行为，不做测试之外的功能。
+2. 不许为了变绿去改测试的断言。如果确信某个测试本身写错了，先在 dialogs 里说明理由，并同步修改 guide.md 里对应的假设或清单条目，再改测试。
+3. 跑完整的 mvn test（不只是新测试类），直到本项目原有的所有检查都通过。遇到的每个坑都记入 guide.md。
+4. 提交并打 tag tdd-t2-green，body 里写上全量测试数字，并和基线对比。
+
+### Agent
+
+T2（TDD 绿）完成。测试一行未改，没有发现写错的测试。
+
+实现（只在 src/main，2 个文件）：
+- `CSVFormat.Builder`：新增 `requiredHeaders` 字段；`setRequiredHeaders(String...)` 做防御拷贝，`null` 或空数组存为 `null`（= 关闭，H8）；`Builder(CSVFormat)` 复制该字段（H11，`copy()`/`builder()` 不丢设置）。
+- `CSVFormat`：新增 final 字段；`getRequiredHeaders()` 返回拷贝，关闭时返回空数组（H8）；`equals`/`hashCode` 计入（H11）；`validate()` 追加两条配置校验，均抛 `IllegalArgumentException`：设了必需列但 `headers == null`（H6）、必需列名为 null/空/空白（H9，复用已有 `isBlank`）。
+- `CSVParser`：`createHeaders()` 建好 name→index 映射后调用新私有方法 `checkRequiredHeaders`：按声明顺序收集 `headerMap` 里不存在的名字，非空则抛 `CSVException("Missing required header name(s) %s in header %s")`，实际表头用 `Arrays.toString(headerRecord)`，空输入为 `[]`。因为用的就是 `record.get(name)` 同一个 `headerMap`，大小写（H5）、trim（H12）、显式表头优先（H4）自动一致；检查在构造器里，早于第一条记录（H3）。打印路径不碰该设置（H13）。
+- 未做测试之外的功能（如 `toString()` 不显示该属性）。
+
+结果：
+- `RequiredHeadersTest`：18 run / 0 fail / 0 error。
+- 全量 `mvn test`：942 run / 0 fail / 0 error / 11 skip，BUILD SUCCESS，约 5.4 s。对比基线 924/0/0/11：多出的 18 条就是新测试，原有 924 条全绿，skip 不变。
+- 项目全部检查 `mvn`（pom defaultGoal：verify + rat + japicmp + spotbugs + pmd + cpd + javadoc + checkstyle）：BUILD SUCCESS，checkstyle 0 违规，spotbugs 0 BugInstance，jacoco 覆盖率检查通过。
+
+踩坑 1 条（已记入 guide.md）：首次跑 `mvn` 默认目标时打包插件依赖下载失败 `Remote host terminated the handshake`（Maven Central TLS 握手偶发中断），原样重跑即成功，未改 pom。
+
+提交并打 tag `tdd-t2-green`，commit 哈希见本轮聊天回复。下一环节：T3（按 guide.md 第 4 节，做故障注入并记录失败原因）——待你给出具体要求。

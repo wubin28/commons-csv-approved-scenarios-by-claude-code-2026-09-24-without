@@ -69,14 +69,17 @@
 
 - 只跑本特性：`mvn test -Dtest=RequiredHeadersTest -Dsurefire.failIfNoSpecifiedTests=false`
 - 全量：`mvn test`（含 apache-rat 许可证检查，新增文件需带 ASF 头）
+- 项目全部检查：`mvn`（pom 的 defaultGoal：`clean verify apache-rat:check japicmp:cmp spotbugs:check pmd:check pmd:cpd-check javadoc:javadoc checkstyle:check`），首次需联网下载打包/静态检查插件
 
 ## 4. 故障注入与失败原因
 
 ## 5. 踩坑记录
 
 - T0 · 新增 guide.md、dialogs/dialogs.md 后 `mvn test` 失败：`[ERROR] Unexpected count for UNAPPROVED, limit is [0,0].  Count: 2` → apache-rat-plugin 的 rat-check 在 test 之前的阶段运行，要求每个文件带 ASF 许可证头，新增的两个 .md 没有 → 在两个文件顶部加 ASF 许可证头（HTML 注释，渲染不可见），不改 pom.xml；后续新增文件同理需带头，dialogs.md 只往末尾追加。
+- T2 · 首次跑项目全部检查 `mvn`（defaultGoal）失败于打包阶段：`Could not transfer artifact org.apache.commons:commons-lang3:jar:3.18.0 from/to central (https://repo.maven.apache.org/maven2): Remote host terminated the handshake` → `mvn test` 用不到 jar/spotbugs/pmd 等插件，本地仓库里没有它们的依赖，首次需下载，与 Maven Central 的 TLS 握手偶发中断（网络抖动，非代码问题）→ 原样重跑一次 `mvn` 即下载成功，BUILD SUCCESS；未改 pom、未配镜像。
 
 ## 6. 环节与 tag
 
 - T0 克隆 + 基线 · tag `tdd-t0-baseline`：924 run / 0 fail / 0 error / 11 skip，约 5 s。
 - T1 TDD 红 · tag `tdd-t1-red`：RequiredHeadersTest 18 run / 13 fail / 0 error（全是断言失败，无编译错误）/ 5 绿；全量 942 run / 13 fail / 0 error / 11 skip，BUILD FAILURE（预期），约 5.5 s。
+- T2 TDD 绿 · tag `tdd-t2-green`：RequiredHeadersTest 18 run / 0 fail / 0 error；全量 `mvn test` 942 run / 0 fail / 0 error / 11 skip，BUILD SUCCESS，约 5.4 s（对比基线 924：+18 新用例，原有 924 全绿，skip 不变）；项目全部检查 `mvn`（defaultGoal）BUILD SUCCESS，checkstyle 0、spotbugs 0，PMD/CPD、japicmp、javadoc、jacoco 均通过。未改测试。

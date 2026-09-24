@@ -261,6 +261,8 @@ public final class CSVFormat implements Serializable {
 
         private String recordSeparator;
 
+        private String[] requiredHeaders;
+
         private boolean skipHeaderRecord;
 
         private boolean lenientEof;
@@ -297,6 +299,7 @@ public final class CSVFormat implements Serializable {
             this.quoteMode = csvFormat.quoteMode;
             this.quotedNullString = csvFormat.quotedNullString;
             this.recordSeparator = csvFormat.recordSeparator;
+            this.requiredHeaders = csvFormat.requiredHeaders;
             this.skipHeaderRecord = csvFormat.skipHeaderRecord;
             this.trailingData = csvFormat.trailingData;
             this.trailingDelimiter = csvFormat.trailingDelimiter;
@@ -855,7 +858,9 @@ public final class CSVFormat implements Serializable {
         /**
          * Sets the header names that must be present when parsing.
          * <p>
-         * TODO Stub only: the value is not stored and not checked yet.
+         * When set, creating a {@link CSVParser} throws a {@link CSVException} listing every missing name if the header used by the parser does not
+         * contain all of these names. Names are matched as {@link CSVRecord#get(String)} matches them, honoring {@link #setIgnoreHeaderCase(boolean)}.
+         * A header must be configured with {@link #setHeader(String...)} or one of its variants. This setting is ignored when printing.
          * </p>
          *
          * @param requiredHeaders the header names that must be present, {@code null} or empty to disable the check.
@@ -863,6 +868,7 @@ public final class CSVFormat implements Serializable {
          * @since 1.15.0
          */
         public Builder setRequiredHeaders(final String... requiredHeaders) {
+            this.requiredHeaders = requiredHeaders == null || requiredHeaders.length == 0 ? null : requiredHeaders.clone();
             return this;
         }
 
@@ -1609,6 +1615,9 @@ public final class CSVFormat implements Serializable {
     /** For output. */
     private final String recordSeparator;
 
+    /** Header names that must be present when parsing, null if the check is disabled. */
+    private final String[] requiredHeaders;
+
     /** Whether to skip the header record. */
     private final boolean skipHeaderRecord;
 
@@ -1646,6 +1655,7 @@ public final class CSVFormat implements Serializable {
         this.quoteMode = builder.quoteMode;
         this.quotedNullString = builder.quotedNullString;
         this.recordSeparator = builder.recordSeparator;
+        this.requiredHeaders = builder.requiredHeaders;
         this.skipHeaderRecord = builder.skipHeaderRecord;
         this.trailingData = builder.trailingData;
         this.trailingDelimiter = builder.trailingDelimiter;
@@ -1707,7 +1717,8 @@ public final class CSVFormat implements Serializable {
                 ignoreSurroundingSpaces == other.ignoreSurroundingSpaces && lenientEof == other.lenientEof &&
                 Objects.equals(nullString, other.nullString) && Objects.equals(quoteCharacter, other.quoteCharacter) &&
                 quoteMode == other.quoteMode && Objects.equals(quotedNullString, other.quotedNullString) &&
-                Objects.equals(recordSeparator, other.recordSeparator) && skipHeaderRecord == other.skipHeaderRecord &&
+                Objects.equals(recordSeparator, other.recordSeparator) && Arrays.equals(requiredHeaders, other.requiredHeaders) &&
+                skipHeaderRecord == other.skipHeaderRecord &&
                 trailingData == other.trailingData && trailingDelimiter == other.trailingDelimiter && trim == other.trim;
     }
 
@@ -2001,15 +2012,12 @@ public final class CSVFormat implements Serializable {
 
     /**
      * Gets a copy of the header names that must be present when parsing.
-     * <p>
-     * TODO Stub only: always returns an empty array.
-     * </p>
      *
      * @return a copy of the required header names, never {@code null}; empty if the check is disabled.
      * @since 1.15.0
      */
     public String[] getRequiredHeaders() {
-        return new String[0];
+        return requiredHeaders != null ? requiredHeaders.clone() : Constants.EMPTY_STRING_ARRAY;
     }
 
     /**
@@ -2056,6 +2064,7 @@ public final class CSVFormat implements Serializable {
         int result = 1;
         result = prime * result + Arrays.hashCode(headerComments);
         result = prime * result + Arrays.hashCode(headers);
+        result = prime * result + Arrays.hashCode(requiredHeaders);
         return prime * result + Objects.hash(allowMissingColumnNames, autoFlush, commentMarker, delimiter, duplicateHeaderMode, escapeCharacter,
                 ignoreEmptyLines, ignoreHeaderCase, ignoreSurroundingSpaces, lenientEof, nullString, quoteCharacter, quoteMode, quotedNullString,
                 recordSeparator, skipHeaderRecord, trailingData, trailingDelimiter, trim);
@@ -2661,6 +2670,17 @@ public final class CSVFormat implements Serializable {
                     throw new IllegalArgumentException(String.format(
                             "The header contains a duplicate name: \"%s\" in %s. If this is valid then use CSVFormat.Builder.setDuplicateHeaderMode().", header,
                             Arrays.toString(headers)));
+                }
+            }
+        }
+        // Validate required headers
+        if (requiredHeaders != null) {
+            if (headers == null) {
+                throw new IllegalArgumentException("Required header names " + Arrays.toString(requiredHeaders) + " need a header, use setHeader().");
+            }
+            for (final String requiredHeader : requiredHeaders) {
+                if (isBlank(requiredHeader)) {
+                    throw new IllegalArgumentException("A required header name is null or blank in " + Arrays.toString(requiredHeaders));
                 }
             }
         }

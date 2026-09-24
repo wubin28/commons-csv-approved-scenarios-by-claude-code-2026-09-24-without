@@ -585,6 +585,26 @@ public final class CSVParser implements Iterable<CSVRecord>, Closeable {
         lexer.close();
     }
 
+    /**
+     * Checks that the header contains every required header name of the format.
+     *
+     * @param headerMap the name to index mapping, matching names as {@link CSVRecord#get(String)} does.
+     * @param headerRecord the header used by this parser, null if the input is empty.
+     * @throws CSVException if any required header name is missing.
+     */
+    private void checkRequiredHeaders(final Map<String, Integer> headerMap, final String[] headerRecord) throws CSVException {
+        final List<String> missing = new ArrayList<>();
+        for (final String requiredHeader : format.getRequiredHeaders()) {
+            if (!headerMap.containsKey(requiredHeader)) {
+                missing.add(requiredHeader);
+            }
+        }
+        if (!missing.isEmpty()) {
+            throw new CSVException("Missing required header name(s) %s in header %s", missing,
+                    Arrays.toString(headerRecord != null ? headerRecord : Constants.EMPTY_STRING_ARRAY));
+        }
+    }
+
     private Map<String, Integer> createEmptyHeaderMap() {
         return format.getIgnoreHeaderCase() ?
                 new TreeMap<>(String.CASE_INSENSITIVE_ORDER) :
@@ -650,6 +670,7 @@ public final class CSVParser implements Iterable<CSVRecord>, Closeable {
                     }
                 }
             }
+            checkRequiredHeaders(headerMap, headerRecord);
         }
         // Make header names Collection immutable
         return new Headers(headerMap, headerNames == null ? Collections.emptyList() : Collections.unmodifiableList(headerNames));

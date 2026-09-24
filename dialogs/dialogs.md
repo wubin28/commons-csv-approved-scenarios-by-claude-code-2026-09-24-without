@@ -125,3 +125,44 @@ T2（TDD 绿）完成。测试一行未改，没有发现写错的测试。
 踩坑 1 条（已记入 guide.md）：首次跑 `mvn` 默认目标时打包插件依赖下载失败 `Remote host terminated the handshake`（Maven Central TLS 握手偶发中断），原样重跑即成功，未改 pom。
 
 提交并打 tag `tdd-t2-green`，commit 哈希见本轮聊天回复。下一环节：T3（按 guide.md 第 4 节，做故障注入并记录失败原因）——待你给出具体要求。
+
+## T3 · 第 1 轮
+
+### 我
+
+【会话守则】
+- 当前目录 = 本仓库根（git）。不要 git push；不要修改 /Users/binwu/OOR/katas/commons-csv。
+- 每次回复我之后，把本轮对话完整追加到 dialogs/dialogs.md 末尾：标题"## <环节编号> · 第 N 轮"，"### 我"原样贴出我的消息，"### Agent"贴出你回复我的全文。
+- 遇到坑：先修复，再往 guide.md「踩坑记录」追加：环节 · 现象 → 原因 → 解决。
+- 环节结束时一次性 git commit（Conventional Commits，意图清楚），打指定 tag，然后告诉我：commit、tag、mvn test 结果、下一环节。
+
+【本环节：T3（TDD 重构）】
+先看 git diff tdd-t0-baseline..HEAD，了解本次新增的全部改动。
+1. 在不改变行为的前提下重构生产代码和测试代码：消除重复、改善命名、和项目现有风格对齐、删掉多余代码。每一步小改完都跑一次 RequiredHeadersTest。
+2. 不新增测试、不改变测试的含义；测试方法改名可以，但要同步更新 guide.md 测试清单里的名字。
+3. 最后跑完整的 mvn test，结果必须和 T2 一致。
+4. 在 dialogs 里列出你做了哪几项重构、各自的理由。提交并打 tag tdd-t3-refactor。
+
+### Agent
+
+T3（TDD 重构）完成。先看了 `git diff tdd-t0-baseline..HEAD`：生产代码改了 `CSVFormat`（Builder 字段/setter、final 字段、getter、equals/hashCode、validate）和 `CSVParser`（`checkRequiredHeaders` + 一处调用），测试新增 `RequiredHeadersTest`（17 个方法 / 18 条用例）。
+
+重构（共 4 项，均不改行为）：
+
+1. 测试：提取 `assertMissingHeaders(format, input, expectedMessage)` 辅助方法。理由：T01、T02、T04、T05、T07、T08、T16 共 7 处重复"`assertThrows(CSVException…parse(new StringReader(…)))` + 比对 `getMessage()`"两行；合成一行后每个测试只剩"配置 + 输入 + 期望信息"。期望信息仍写完整字面量，断言的含义和强度不变。→ RequiredHeadersTest 18/0/0。
+2. 测试：T12 局部变量 `empty` / `nul` 改名为 `clearedByEmpty` / `clearedByNull`。理由：`nul` 是为了避开关键字的生硬缩写；新名说明这两个格式是"先设置、再清除"得到的，正是该测试要验证的点。→ 18/0/0。
+3. 生产：`CSVFormat.equals` 断行重排。理由：T2 插入 `Arrays.equals(requiredHeaders, …)` 后，`skipHeaderRecord == …` 单独落成一个短行，破坏了原来每行两个比较的节奏；重排后与项目现有布局一致，逻辑不变。
+4. 生产：`CSVParser.checkRequiredHeaders` 里局部变量 `missing` 改名为 `missingHeaders`。理由：与同方法里的 `requiredHeader` 以及 `headerMap` / `headerRecord` 命名对齐，一眼可知是表头名列表。→ 第 3、4 项改完后合跑一次 RequiredHeadersTest，18/0/0（这两步共用一次运行，不是各跑一次）。
+
+看过但没改的：
+- `checkRequiredHeaders` 里的 `headerRecord != null ? headerRecord : EMPTY_STRING_ARRAY`：只有空输入时为 null，挪到调用处并不会更简单，保留。
+- `validate()` 里的必需列校验块：写法和紧上方"Validate headers"块一致（循环 + `isBlank` + `Arrays.toString`），已符合项目风格。
+- 测试里反复出现的 `"id", "currency", "amount"`：抽成常量反而让单个测试读起来更费劲，保留字面量。
+- 没有发现多余代码可删。
+
+验证：
+- 全量 `mvn test`：942 run / 0 fail / 0 error / 11 skip，BUILD SUCCESS，约 6 s——与 T2 完全一致。
+- `mvn checkstyle:check`：无违规（新行都没超过 160 字符上限）。
+- 测试方法名一个没改，guide.md 测试清单无需更新；在 guide.md「环节与 tag」里补了 T3 一行。本环节没有踩坑。
+
+提交并打 tag `tdd-t3-refactor`，commit 哈希见本轮聊天回复。下一环节：T4（按 guide.md 第 4 节，做故障注入并记录失败原因）——待你给出具体要求。

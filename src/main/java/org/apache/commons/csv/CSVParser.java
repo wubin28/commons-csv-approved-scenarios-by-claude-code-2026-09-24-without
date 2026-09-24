@@ -593,14 +593,14 @@ public final class CSVParser implements Iterable<CSVRecord>, Closeable {
      * @throws CSVException if any required header name is missing.
      */
     private void checkRequiredHeaders(final Map<String, Integer> headerMap, final String[] headerRecord) throws CSVException {
-        final List<String> missing = new ArrayList<>();
+        final List<String> missingHeaders = new ArrayList<>();
         for (final String requiredHeader : format.getRequiredHeaders()) {
             if (!headerMap.containsKey(requiredHeader)) {
-                missing.add(requiredHeader);
+                missingHeaders.add(requiredHeader);
             }
         }
-        if (!missing.isEmpty()) {
-            throw new CSVException("Missing required header name(s) %s in header %s", missing,
+        if (!missingHeaders.isEmpty()) {
+            throw new CSVException("Missing required header name(s) %s in header %s", missingHeaders,
                     Arrays.toString(headerRecord != null ? headerRecord : Constants.EMPTY_STRING_ARRAY));
         }
     }

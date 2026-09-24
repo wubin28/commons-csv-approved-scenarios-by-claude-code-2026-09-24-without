@@ -44,6 +44,14 @@ class RequiredHeadersTest {
         return CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true);
     }
 
+    /**
+     * Asserts that creating a parser for the input fails with the given missing required header message.
+     */
+    private static void assertMissingHeaders(final CSVFormat format, final String input, final String expectedMessage) {
+        final CSVException e = assertThrows(CSVException.class, () -> format.parse(new StringReader(input)));
+        assertEquals(expectedMessage, e.getMessage());
+    }
+
     private static String firstValue(final CSVFormat format, final String input, final String name) throws IOException {
         try (CSVParser parser = format.parse(new StringReader(input))) {
             return parser.iterator().next().get(name);
@@ -54,16 +62,14 @@ class RequiredHeadersTest {
     @Test
     void testMissingColumnFailsBeforeFirstRecord() {
         final CSVFormat format = fileHeaderBuilder().setRequiredHeaders("id", "currency", "amount").get();
-        final CSVException e = assertThrows(CSVException.class, () -> format.parse(new StringReader("id,amount\n1,10\n")));
-        assertEquals("Missing required header name(s) [currency] in header [id, amount]", e.getMessage());
+        assertMissingHeaders(format, "id,amount\n1,10\n", "Missing required header name(s) [currency] in header [id, amount]");
     }
 
     /** T02 (H2): all missing columns are reported together, in the declared order. */
     @Test
     void testMultipleMissingColumnsReportedInDeclaredOrder() {
         final CSVFormat format = fileHeaderBuilder().setRequiredHeaders("currency", "id", "amount", "date").get();
-        final CSVException e = assertThrows(CSVException.class, () -> format.parse(new StringReader("id,note\n1,x\n")));
-        assertEquals("Missing required header name(s) [currency, amount, date] in header [id, note]", e.getMessage());
+        assertMissingHeaders(format, "id,note\n1,x\n", "Missing required header name(s) [currency, amount, date] in header [id, note]");
     }
 
     /** T03 (H10): extra columns and a different column order are accepted. */
@@ -77,16 +83,14 @@ class RequiredHeadersTest {
     @Test
     void testExplicitHeaderMissingColumn() {
         final CSVFormat format = CSVFormat.DEFAULT.builder().setHeader("id", "amount").setRequiredHeaders("id", "currency", "amount").get();
-        final CSVException e = assertThrows(CSVException.class, () -> format.parse(new StringReader("1,10\n")));
-        assertEquals("Missing required header name(s) [currency] in header [id, amount]", e.getMessage());
+        assertMissingHeaders(format, "1,10\n", "Missing required header name(s) [currency] in header [id, amount]");
     }
 
     /** T05 (H4): with an explicit header and a skipped first line, the explicit header is checked, not the skipped line. */
     @Test
     void testExplicitHeaderCheckedEvenIfSkippedLineHasColumn() {
         final CSVFormat format = CSVFormat.DEFAULT.builder().setHeader("id", "amount").setSkipHeaderRecord(true).setRequiredHeaders("currency").get();
-        final CSVException e = assertThrows(CSVException.class, () -> format.parse(new StringReader("id,currency,amount\n1,CNY,10\n")));
-        assertEquals("Missing required header name(s) [currency] in header [id, amount]", e.getMessage());
+        assertMissingHeaders(format, "id,currency,amount\n1,CNY,10\n", "Missing required header name(s) [currency] in header [id, amount]");
     }
 
     /** T06 (H5): with ignoreHeaderCase, names match regardless of case. */
@@ -100,16 +104,14 @@ class RequiredHeadersTest {
     @Test
     void testCaseSensitiveByDefault() {
         final CSVFormat format = fileHeaderBuilder().setRequiredHeaders("id", "currency", "amount").get();
-        final CSVException e = assertThrows(CSVException.class, () -> format.parse(new StringReader("ID,Currency,amount\n1,CNY,10\n")));
-        assertEquals("Missing required header name(s) [id, currency] in header [ID, Currency, amount]", e.getMessage());
+        assertMissingHeaders(format, "ID,Currency,amount\n1,CNY,10\n", "Missing required header name(s) [id, currency] in header [ID, Currency, amount]");
     }
 
     /** T08 (H7): empty input has no header, so every required column is missing. */
     @Test
     void testEmptyInputReportsAllMissing() {
         final CSVFormat format = fileHeaderBuilder().setRequiredHeaders("id", "currency", "amount").get();
-        final CSVException e = assertThrows(CSVException.class, () -> format.parse(new StringReader("")));
-        assertEquals("Missing required header name(s) [id, currency, amount] in header []", e.getMessage());
+        assertMissingHeaders(format, "", "Missing required header name(s) [id, currency, amount] in header []");
     }
 
     /** T09 (H6): required headers without any header configuration is a configuration error at build time. */
@@ -134,12 +136,12 @@ class RequiredHeadersTest {
     /** T12 (H8): no arguments or null disables the check, including clearing a previous value. */
     @Test
     void testEmptyOrNullDisablesCheck() throws IOException {
-        final CSVFormat empty = fileHeaderBuilder().setRequiredHeaders("currency").setRequiredHeaders().get();
-        final CSVFormat nul = fileHeaderBuilder().setRequiredHeaders("currency").setRequiredHeaders((String[]) null).get();
-        assertArrayEquals(new String[0], empty.getRequiredHeaders());
-        assertArrayEquals(new String[0], nul.getRequiredHeaders());
-        assertEquals("1", firstValue(empty, "id\n1\n", "id"));
-        assertEquals("1", firstValue(nul, "id\n1\n", "id"));
+        final CSVFormat clearedByEmpty = fileHeaderBuilder().setRequiredHeaders("currency").setRequiredHeaders().get();
+        final CSVFormat clearedByNull = fileHeaderBuilder().setRequiredHeaders("currency").setRequiredHeaders((String[]) null).get();
+        assertArrayEquals(new String[0], clearedByEmpty.getRequiredHeaders());
+        assertArrayEquals(new String[0], clearedByNull.getRequiredHeaders());
+        assertEquals("1", firstValue(clearedByEmpty, "id\n1\n", "id"));
+        assertEquals("1", firstValue(clearedByNull, "id\n1\n", "id"));
     }
 
     /** T13 (H8): the builder and the getter both make defensive copies. */
@@ -175,8 +177,7 @@ class RequiredHeadersTest {
     @Test
     void testUntrimmedHeaderComparedExactly() {
         final CSVFormat format = fileHeaderBuilder().setRequiredHeaders("id", "currency").get();
-        final CSVException e = assertThrows(CSVException.class, () -> format.parse(new StringReader("id, currency\n1,CNY\n")));
-        assertEquals("Missing required header name(s) [currency] in header [id,  currency]", e.getMessage());
+        assertMissingHeaders(format, "id, currency\n1,CNY\n", "Missing required header name(s) [currency] in header [id,  currency]");
     }
 
     /** T17 (H13): printing ignores required headers. */

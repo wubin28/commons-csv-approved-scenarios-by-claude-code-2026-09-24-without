@@ -1718,8 +1718,8 @@ public final class CSVFormat implements Serializable {
                 Objects.equals(nullString, other.nullString) && Objects.equals(quoteCharacter, other.quoteCharacter) &&
                 quoteMode == other.quoteMode && Objects.equals(quotedNullString, other.quotedNullString) &&
                 Objects.equals(recordSeparator, other.recordSeparator) && Arrays.equals(requiredHeaders, other.requiredHeaders) &&
-                skipHeaderRecord == other.skipHeaderRecord &&
-                trailingData == other.trailingData && trailingDelimiter == other.trailingDelimiter && trim == other.trim;
+                skipHeaderRecord == other.skipHeaderRecord && trailingData == other.trailingData &&
+                trailingDelimiter == other.trailingDelimiter && trim == other.trim;
     }
 
     private void escape(final char c, final Appendable appendable) throws IOException {

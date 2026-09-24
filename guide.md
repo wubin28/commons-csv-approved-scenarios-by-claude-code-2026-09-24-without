@@ -83,3 +83,4 @@
 - T0 克隆 + 基线 · tag `tdd-t0-baseline`：924 run / 0 fail / 0 error / 11 skip，约 5 s。
 - T1 TDD 红 · tag `tdd-t1-red`：RequiredHeadersTest 18 run / 13 fail / 0 error（全是断言失败，无编译错误）/ 5 绿；全量 942 run / 13 fail / 0 error / 11 skip，BUILD FAILURE（预期），约 5.5 s。
 - T2 TDD 绿 · tag `tdd-t2-green`：RequiredHeadersTest 18 run / 0 fail / 0 error；全量 `mvn test` 942 run / 0 fail / 0 error / 11 skip，BUILD SUCCESS，约 5.4 s（对比基线 924：+18 新用例，原有 924 全绿，skip 不变）；项目全部检查 `mvn`（defaultGoal）BUILD SUCCESS，checkstyle 0、spotbugs 0，PMD/CPD、japicmp、javadoc、jacoco 均通过。未改测试。
+- T3 TDD 重构 · tag `tdd-t3-refactor`：4 项不改行为的重构（测试提取 `assertMissingHeaders` 辅助方法、T12 局部变量改名、`CSVFormat.equals` 断行对齐、`CSVParser.checkRequiredHeaders` 局部变量改名），每步后 RequiredHeadersTest 18 run / 0 fail / 0 error；全量 `mvn test` 942 run / 0 fail / 0 error / 11 skip，BUILD SUCCESS，约 6 s，与 T2 一致；`checkstyle:check` 无违规。测试方法名未改，测试清单无需更新。

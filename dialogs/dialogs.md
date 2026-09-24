@@ -195,3 +195,53 @@ T3（TDD 重构）完成。先看了 `git diff tdd-t0-baseline..HEAD`：生产�
 T4 完成。17 个变异覆盖 T01–T17，最终预测与实际 17/17 一致。14 号初始预测漏算解析器内部复制格式导致的 7 个连带失败；已补全预测。Surefire 自闭合节点解析错误也已修复，记入 guide.md。
 
 无注入残留；全量 `mvn test`：942 run / 0 fail / 0 error / 11 skip，BUILD SUCCESS。提交：`test: verify required headers with fault injection`；tag：`tdd-t4-fault-injection`。产物：[expected.md](/Users/binwu/OOR/my-lab/commons-csv-approved-scenarios-by-claude-code-2026-09-24/without/fault-injection/expected.md)、[run-fault-injection.sh](/Users/binwu/OOR/my-lab/commons-csv-approved-scenarios-by-claude-code-2026-09-24/without/fault-injection/run-fault-injection.sh)、[last-run.log](/Users/binwu/OOR/my-lab/commons-csv-approved-scenarios-by-claude-code-2026-09-24/without/fault-injection/last-run.log)。下一环节：T5（待你指定）。
+
+## T5 · 第 1 轮
+
+### 我
+
+# AGENTS.md instructions
+
+<INSTRUCTIONS>
+@/Users/binwu/.codex/RTK.md
+</INSTRUCTIONS><environment_context>
+  <cwd>/Users/binwu/OOR/my-lab/commons-csv-approved-scenarios-by-claude-code-2026-09-24/without</cwd>
+  <shell>zsh</shell>
+  <current_date>2026-09-24</current_date>
+  <timezone>Asia/Taipei</timezone>
+  <filesystem><workspace_roots><root>/Users/binwu/OOR/my-lab/commons-csv-approved-scenarios-by-claude-code-2026-09-24/without</root></workspace_roots><permission_profile type="managed"><file_system type="restricted"><entry access="read"><special>:root</special></entry><entry access="write"><path>/Users/binwu/OOR/my-lab/commons-csv-approved-scenarios-by-claude-code-2026-09-24/without</path></entry><entry access="write"><special>:slash_tmp</special></entry><entry access="write"><special>:tmpdir</special></entry><entry access="read"><path>/Users/binwu/OOR/my-lab/commons-csv-approved-scenarios-by-claude-code-2026-09-24/without/.git</path></entry><entry access="read"><path>/Users/binwu/OOR/my-lab/commons-csv-approved-scenarios-by-claude-code-2026-09-24/without/.agents</path></entry><entry access="read"><path>/Users/binwu/OOR/my-lab/commons-csv-approved-scenarios-by-claude-code-2026-09-24/without/.codex</path></entry></file_system></permission_profile></filesystem>
+</environment_context>
+
+【会话守则】
+- 当前目录 = 本仓库根（git）。不要 git push；不要修改 /Users/binwu/OOR/katas/commons-csv。
+- 每次回复我之后，把本轮对话完整追加到 dialogs/dialogs.md 末尾：标题"## <环节编号> · 第 N 轮"，"### 我"原样贴出我的消息，"### Agent"贴出你回复我的全文。
+- 环节结束时一次性 git commit（Conventional Commits，意图清楚），打指定 tag，然后告诉我：commit、tag、下一环节。
+
+【本环节：T5（理解指南）】
+读者是讲师本人：他要看懂你根据那段简短需求描述写出的测试和生产代码。请补全 guide.md（保留已有内容）：
+- 「0. 环境与基线」：补上最终的全量测试数字。
+- 「1. 隐含假设」：检查每条假设最终是否都被测试覆盖了，标出对应的测试编号。
+- 「2. 测试清单」：每个测试一行，格式为：编号 | 测试方法名 | 验证的行为 | 依据的假设。
+- 「3. 如何运行测试」：可以直接复制的命令，包括只跑新测试、跑全量、跑故障注入脚本，以及各自的预期输出。
+- 「4. 故障注入与失败原因」：每个变异一小节，写清：改动的 diff（原样贴出）；哪些测试变红；每个变红的测试是怎样通过它的输入和断言发现这个破坏的（指到具体的断言行）；如果还有测试同时变红，说明原因。
+- 「5. 踩坑记录」：整理成表：环节 | 现象 | 原因 | 解决 | 怎样提前避开。
+- 「6. 环节与 tag」：表格列出 tag | commit | 做了什么 | mvn test 结果。
+写完后，按「3. 如何运行测试」里的命令逐条执行一遍，确认文档没有写错。提交并打 tag tdd-t5-guide。
+
+### Agent
+
+我会先核对仓库基线、测试、故障注入记录和现有指南，再补全 `guide.md`。完成后逐条执行指南中的命令，提交并打 `tdd-t5-guide` tag。
+
+已确认当前基线在 `tdd-t4-fault-injection`，工作区干净。接下来按仓库指令使用 `rtk`，并按适用技能核对文档所需证据与完成前验证。
+
+测试源码与 T4 记录对应：17 个测试方法、18 次执行；17 个变异的失败集合均与预测一致。现在先重跑故障注入脚本，确认可写入指南的实际结果，再补每个变异的断言解释。
+
+指南已补上假设与测试映射、可复制命令，以及 17 个变异的原始 diff 和断言定位。接着整理踩坑与 tag 表，再验证文档中的命令。
+
+两条测试命令已重跑：新测试 18/18 通过；全量 942 次执行、0 失败、0 错误、11 跳过。diff 对照也确认 17 段与 patch 原文一致。指南另外列了 `mvn` 完整检查，我会一并执行。
+
+`mvn` 完整检查通过，许可证与 Checkstyle 检查均通过。对话记录已追加；接下来一次性提交，再在干净工作区按指南重跑故障注入脚本，确认结果后打 tag。
+
+T5 完成：[guide.md](/Users/binwu/OOR/my-lab/commons-csv-approved-scenarios-by-claude-code-2026-09-24/without/guide.md) 已补全假设覆盖、17 个测试、运行命令、17 个变异及断言、踩坑和 tag 表。H1、H3、H8、H11 的部分子句缺少直接断言，已明确标出。
+
+验证：新测试 18/18 通过；全量 `mvn test` 为 942 run / 0 fail / 0 error / 11 skip；`mvn` BUILD SUCCESS；故障注入 17/17 一致、0 mismatch。提交：`docs: complete required headers guide`（commit 引用 `tdd-t5-guide^{commit}`）；tag：`tdd-t5-guide`。下一环节：待你指定。

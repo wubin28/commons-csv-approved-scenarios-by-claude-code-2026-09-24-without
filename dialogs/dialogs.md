@@ -166,3 +166,32 @@ T3（TDD 重构）完成。先看了 `git diff tdd-t0-baseline..HEAD`：生产�
 - 测试方法名一个没改，guide.md 测试清单无需更新；在 guide.md「环节与 tag」里补了 T3 一行。本环节没有踩坑。
 
 提交并打 tag `tdd-t3-refactor`，commit 哈希见本轮聊天回复。下一环节：T4（按 guide.md 第 4 节，做故障注入并记录失败原因）——待你给出具体要求。
+
+## T4 · 第 1 轮
+
+### 我
+
+【会话守则】
+- 当前目录 = 本仓库根（git）。不要 git push；不要修改 /Users/binwu/OOR/katas/commons-csv。
+- 每次回复我之后，把本轮对话完整追加到 dialogs/dialogs.md 末尾：标题"## <环节编号> · 第 N 轮"，"### 我"原样贴出我的消息，"### Agent"贴出你回复我的全文。
+- 遇到坑：先修复，再往 guide.md「踩坑记录」追加：环节 · 现象 → 原因 → 解决。
+- 环节结束时一次性 git commit（Conventional Commits，意图清楚），打指定 tag，然后告诉我：commit、tag、mvn test 结果、下一环节。
+
+【本环节：T4（故障注入）】
+目的：证明 RequiredHeadersTest 里的每一个测试都真的在保护生产代码的某个行为，而不是徒有其名。
+1. 设计变异：每个变异只改 src/main 里的一小处，改成一个"看起来合理但错误"的行为（例如去掉校验调用、改成忽略大小写、跳过某个检查、缺失列的顺序打乱、功能关闭时仍然校验等）。要求 RequiredHeadersTest 里的每个测试方法，都至少被一个专门为它设计的变异打红。
+2. 每个变异存成一个 patch：fault-injection/<NN>-<英文意图短语>.patch（相对仓库根，可用 git apply 应用）。
+3. 先写预测，后运行：在 fault-injection/expected.md 里写一张表，列为：变异编号 | 改了什么 | 针对的测试 | 预期失败的完整测试方法集合 | 预期理由。
+4. 写 fault-injection/run-fault-injection.sh（bash，macOS 自带工具即可运行）：
+   - 开始前要求工作区干净，并先确认无注入时 RequiredHeadersTest 全绿；
+   - 对每个 patch：git apply → 只跑 RequiredHeadersTest → 从 surefire 报告收集失败的测试方法 → 与 expected.md 的预期集合比较 → git apply -R 还原（用 trap 保证中途退出也会还原）；
+   - 最后打印汇总表（变异 | 预期 | 实际 | 一致？）；只要有一个不一致，就以非零状态退出。
+5. 运行脚本，把输出保存到 fault-injection/last-run.log。对每个不一致逐一分析：是预测错了（改 expected.md，并在 dialogs 里说明错在哪），还是测试有空洞（先补强测试，再重跑）。直到全部一致。
+6. 确认工作区里没有残留的注入，完整 mvn test 仍然全绿。
+7. 提交并打 tag tdd-t4-fault-injection。
+
+### Agent
+
+T4 完成。17 个变异覆盖 T01–T17，最终预测与实际 17/17 一致。14 号初始预测漏算解析器内部复制格式导致的 7 个连带失败；已补全预测。Surefire 自闭合节点解析错误也已修复，记入 guide.md。
+
+无注入残留；全量 `mvn test`：942 run / 0 fail / 0 error / 11 skip，BUILD SUCCESS。提交：`test: verify required headers with fault injection`；tag：`tdd-t4-fault-injection`。产物：[expected.md](/Users/binwu/OOR/my-lab/commons-csv-approved-scenarios-by-claude-code-2026-09-24/without/fault-injection/expected.md)、[run-fault-injection.sh](/Users/binwu/OOR/my-lab/commons-csv-approved-scenarios-by-claude-code-2026-09-24/without/fault-injection/run-fault-injection.sh)、[last-run.log](/Users/binwu/OOR/my-lab/commons-csv-approved-scenarios-by-claude-code-2026-09-24/without/fault-injection/last-run.log)。下一环节：T5（待你指定）。

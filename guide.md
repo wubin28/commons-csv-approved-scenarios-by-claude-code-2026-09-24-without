@@ -73,10 +73,16 @@
 
 ## 4. 故障注入与失败原因
 
+- T4 的 17 个变异位于 `fault-injection/`，分别针对 T01–T17；完整的事前预测见 `expected.md`，实际失败集合与一致性见 `last-run.log`。每个 patch 只改 `src/main` 的一处，运行器逐个应用、执行 `RequiredHeadersTest` 并还原。
+- 干净工作区重跑时，先把脚本输出重定向到仓库外临时文件，运行完成后再比对或复制到 `fault-injection/last-run.log`；直接重定向到已跟踪的日志会先使工作区变脏。
+- 首轮报告提取器错误地把 Surefire 自闭合的成功 `<testcase/>` 与后续失败节点连在一起，导致 16 个假不一致；修正提取器后，仅 14 号预测不全。14 号移除 `Builder(CSVFormat)` 中的必需列复制，不仅使 T14 失败，还因解析器内部复制格式，让 T01、T02、T04、T05、T07、T08、T16 的缺列检查失效。已补全 `expected.md`，无需修改测试。
+
 ## 5. 踩坑记录
 
 - T0 · 新增 guide.md、dialogs/dialogs.md 后 `mvn test` 失败：`[ERROR] Unexpected count for UNAPPROVED, limit is [0,0].  Count: 2` → apache-rat-plugin 的 rat-check 在 test 之前的阶段运行，要求每个文件带 ASF 许可证头，新增的两个 .md 没有 → 在两个文件顶部加 ASF 许可证头（HTML 注释，渲染不可见），不改 pom.xml；后续新增文件同理需带头，dialogs.md 只往末尾追加。
 - T2 · 首次跑项目全部检查 `mvn`（defaultGoal）失败于打包阶段：`Could not transfer artifact org.apache.commons:commons-lang3:jar:3.18.0 from/to central (https://repo.maven.apache.org/maven2): Remote host terminated the handshake` → `mvn test` 用不到 jar/spotbugs/pmd 等插件，本地仓库里没有它们的依赖，首次需下载，与 Maven Central 的 TLS 握手偶发中断（网络抖动，非代码问题）→ 原样重跑一次 `mvn` 即下载成功，BUILD SUCCESS；未改 pom、未配镜像。
+- T4 · 首轮故障注入日志显示 16/17 个失败集合不一致，且多个变异总把 T05 记成失败 → Surefire 报告里通过用例是自闭合 `<testcase/>`，原 Perl 正则跨节点读到后一个失败并误配方法名 → 提取器同时识别自闭合和成对节点，重跑后假不一致消失。
+- T4 · 提交后严格重跑一开始报 `ERROR: working tree must be clean before fault injection.` → 将脚本输出直接重定向到已跟踪的 `last-run.log`，shell 在脚本启动前先截断文件 → 用预备运行恢复日志，再把严格运行输出写到仓库外临时文件；退出码 0，临时输出与 `last-run.log` 完全一致。
 
 ## 6. 环节与 tag
 
@@ -84,3 +90,4 @@
 - T1 TDD 红 · tag `tdd-t1-red`：RequiredHeadersTest 18 run / 13 fail / 0 error（全是断言失败，无编译错误）/ 5 绿；全量 942 run / 13 fail / 0 error / 11 skip，BUILD FAILURE（预期），约 5.5 s。
 - T2 TDD 绿 · tag `tdd-t2-green`：RequiredHeadersTest 18 run / 0 fail / 0 error；全量 `mvn test` 942 run / 0 fail / 0 error / 11 skip，BUILD SUCCESS，约 5.4 s（对比基线 924：+18 新用例，原有 924 全绿，skip 不变）；项目全部检查 `mvn`（defaultGoal）BUILD SUCCESS，checkstyle 0、spotbugs 0，PMD/CPD、japicmp、javadoc、jacoco 均通过。未改测试。
 - T3 TDD 重构 · tag `tdd-t3-refactor`：4 项不改行为的重构（测试提取 `assertMissingHeaders` 辅助方法、T12 局部变量改名、`CSVFormat.equals` 断行对齐、`CSVParser.checkRequiredHeaders` 局部变量改名），每步后 RequiredHeadersTest 18 run / 0 fail / 0 error；全量 `mvn test` 942 run / 0 fail / 0 error / 11 skip，BUILD SUCCESS，约 6 s，与 T2 一致；`checkstyle:check` 无违规。测试方法名未改，测试清单无需更新。
+- T4 故障注入 · tag `tdd-t4-fault-injection`：17 个 patch 分别针对 T01–T17，RequiredHeadersTest 的每个方法都被专门变异打红；预测与实际 17/17 一致，0 个不一致，注入无残留；全量 `mvn test` 942 run / 0 fail / 0 error / 11 skip，BUILD SUCCESS。

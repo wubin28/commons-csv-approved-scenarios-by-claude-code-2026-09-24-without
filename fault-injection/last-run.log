@@ -1,0 +1,36 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#      https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+T4 fault injection
+Baseline: RequiredHeadersTest PASS
+Mutation | Expected | Actual | Match?
+01 | testCaseSensitiveByDefault,testEmptyInputReportsAllMissing,testExplicitHeaderCheckedEvenIfSkippedLineHasColumn,testExplicitHeaderMissingColumn,testMissingColumnFailsBeforeFirstRecord,testMultipleMissingColumnsReportedInDeclaredOrder,testUntrimmedHeaderComparedExactly | testCaseSensitiveByDefault,testEmptyInputReportsAllMissing,testExplicitHeaderCheckedEvenIfSkippedLineHasColumn,testExplicitHeaderMissingColumn,testMissingColumnFailsBeforeFirstRecord,testMultipleMissingColumnsReportedInDeclaredOrder,testUntrimmedHeaderComparedExactly | yes
+02 | testCaseSensitiveByDefault,testEmptyInputReportsAllMissing,testMultipleMissingColumnsReportedInDeclaredOrder | testCaseSensitiveByDefault,testEmptyInputReportsAllMissing,testMultipleMissingColumnsReportedInDeclaredOrder | yes
+03 | testAllPresentWithExtraColumnsInAnyOrder | testAllPresentWithExtraColumnsInAnyOrder | yes
+04 | testExplicitHeaderCheckedEvenIfSkippedLineHasColumn,testExplicitHeaderMissingColumn | testExplicitHeaderCheckedEvenIfSkippedLineHasColumn,testExplicitHeaderMissingColumn | yes
+05 | testExplicitHeaderCheckedEvenIfSkippedLineHasColumn | testExplicitHeaderCheckedEvenIfSkippedLineHasColumn | yes
+06 | testIgnoreHeaderCaseMatchesAnyCase | testIgnoreHeaderCaseMatchesAnyCase | yes
+07 | testCaseSensitiveByDefault | testCaseSensitiveByDefault | yes
+08 | testEmptyInputReportsAllMissing | testEmptyInputReportsAllMissing | yes
+09 | testRequiredHeadersWithoutHeaderFailsAtBuild | testRequiredHeadersWithoutHeaderFailsAtBuild | yes
+10 | testNullRequiredNameFailsAtBuild | testNullRequiredNameFailsAtBuild | yes
+11 | testBlankRequiredNameFailsAtBuild | testBlankRequiredNameFailsAtBuild | yes
+12 | testEmptyOrNullDisablesCheck | testEmptyOrNullDisablesCheck | yes
+13 | testGetterReturnsDefensiveCopy | testGetterReturnsDefensiveCopy | yes
+14 | testCaseSensitiveByDefault,testCopyAndEquality,testEmptyInputReportsAllMissing,testExplicitHeaderCheckedEvenIfSkippedLineHasColumn,testExplicitHeaderMissingColumn,testMissingColumnFailsBeforeFirstRecord,testMultipleMissingColumnsReportedInDeclaredOrder,testUntrimmedHeaderComparedExactly | testCaseSensitiveByDefault,testCopyAndEquality,testEmptyInputReportsAllMissing,testExplicitHeaderCheckedEvenIfSkippedLineHasColumn,testExplicitHeaderMissingColumn,testMissingColumnFailsBeforeFirstRecord,testMultipleMissingColumnsReportedInDeclaredOrder,testUntrimmedHeaderComparedExactly | yes
+15 | testTrimmedHeaderSatisfiesRequirement | testTrimmedHeaderSatisfiesRequirement | yes
+16 | testUntrimmedHeaderComparedExactly | testUntrimmedHeaderComparedExactly | yes
+17 | testPrinterIgnoresRequiredHeaders | testPrinterIgnoresRequiredHeaders | yes
+Total: 17 mutations; 0 mismatches

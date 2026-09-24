@@ -853,6 +853,20 @@ public final class CSVFormat implements Serializable {
         }
 
         /**
+         * Sets the header names that must be present when parsing.
+         * <p>
+         * TODO Stub only: the value is not stored and not checked yet.
+         * </p>
+         *
+         * @param requiredHeaders the header names that must be present, {@code null} or empty to disable the check.
+         * @return This instance.
+         * @since 1.15.0
+         */
+        public Builder setRequiredHeaders(final String... requiredHeaders) {
+            return this;
+        }
+
+        /**
          * Sets whether to skip the header record.
          *
          * @param skipHeaderRecord whether to skip the header record.
@@ -1983,6 +1997,19 @@ public final class CSVFormat implements Serializable {
      */
     public String getRecordSeparator() {
         return recordSeparator;
+    }
+
+    /**
+     * Gets a copy of the header names that must be present when parsing.
+     * <p>
+     * TODO Stub only: always returns an empty array.
+     * </p>
+     *
+     * @return a copy of the required header names, never {@code null}; empty if the check is disabled.
+     * @since 1.15.0
+     */
+    public String[] getRequiredHeaders() {
+        return new String[0];
     }
 
     /**
